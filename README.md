@@ -530,9 +530,9 @@ git push origin feature/your-feature
 
 ---
 
-# 📄 License
+## 📄 License
 
-Add the project's chosen license here before publishing the repository publicly.
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
