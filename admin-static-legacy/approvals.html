@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen approvals — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{--maroon:#7C1B3B;--maroon-dark:#591327;--cream:#FBF6EC;--sand:#F1E7D6;--ink:#2B1720;--ink-soft:#6B5A61;--line:rgba(43,23,32,0.1);--success:#3B6D11;--success-bg:#EAF3DE;--warning:#854F0B;--warning-bg:#FAEEDA;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);}
+  .wrap{max-width:800px;margin:0 auto;padding:40px 24px 80px;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+  .logo span{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--maroon);}
+  h1{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-bottom:6px;}
+  p.sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:22px;}
+  .row{display:flex;align-items:center;gap:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:10px;}
+  .row-info{flex:1;}
+  .row-info h4{font-size:14.5px;font-weight:600;}
+  .row-info p{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:100px;}
+  .pill.pending{color:var(--warning);background:var(--warning-bg);}
+  .pill.approved{color:var(--success);background:var(--success-bg);}
+  button{font-weight:600;font-size:13px;padding:9px 18px;border-radius:100px;border:none;cursor:pointer;}
+  .approve{background:var(--maroon);color:#fff;}
+  .approve:hover{background:var(--maroon-dark);}
+  .reject{background:#fff;border:1px solid var(--line);color:var(--ink);margin-left:8px;}
+  .empty{text-align:center;padding:50px;color:var(--ink-soft);}
+  .banner{font-size:13px;padding:10px 14px;border-radius:10px;margin-bottom:16px;background:var(--sand);color:var(--ink-soft);display:none;}
+  .banner.show{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo"><svg width="24" height="24" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/></svg><span>AVIKA admin</span></div>
+  <h1>Kitchen approvals</h1>
+  <p class="sub">New kitchens stay hidden from customers until approved here.</p>
+  <div class="banner" id="banner" role="status"></div>
+  <div id="list"></div>
+</div>
+<script>
+  async function load(){
+    var banner = document.getElementById('banner');
+    if (typeof Avika === 'undefined' || !Avika.auth.isLoggedIn()){
+      banner.className = 'banner show'; banner.textContent = 'Log in as an admin to manage approvals.';
+      return;
+    }
+    var res = await Avika.kitchens.adminAll();
+    if (!res.ok){ banner.className = 'banner show'; banner.textContent = res.error; return; }
+    render(res.data);
+  }
+
+  function render(kitchens){
+    var list = document.getElementById('list');
+    if (!kitchens.length){ list.innerHTML = '<div class="empty">No kitchens yet.</div>'; return; }
+    list.innerHTML = kitchens.map(function(k){
+      return '<div class="row">' +
+        '<div class="row-info"><h4>' + k.name + ' <span class="pill ' + (k.isApproved ? 'approved' : 'pending') + '">' + (k.isApproved ? 'Approved' : 'Pending') + '</span></h4>' +
+        '<p>' + (k.owner && k.owner.name || 'Unknown owner') + ' · ' + (k.owner && k.owner.email || '') + ' · ' + (k.location && k.location.address || '') + '</p></div>' +
+        (k.isApproved
+          ? '<button class="reject" onclick="setApproval(\'' + k._id + '\', false)">Revoke</button>'
+          : '<button class="approve" onclick="setApproval(\'' + k._id + '\', true)">Approve</button>') +
+      '</div>';
+    }).join('');
+  }
+
+  async function setApproval(id, approve){
+    var res = await Avika.kitchens.approve(id, approve);
+    if (!res.ok){ alert(res.error); return; }
+    load();
+  }
+
+  load();
+</script>
+</body>
+</html>

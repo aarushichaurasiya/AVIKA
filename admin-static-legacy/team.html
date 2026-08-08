@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{--maroon:#7C1B3B;--maroon-dark:#591327;--cream:#FBF6EC;--sand:#F1E7D6;--ink:#2B1720;--ink-soft:#6B5A61;--line:rgba(43,23,32,0.1);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);}
+  .wrap{max-width:640px;margin:0 auto;padding:40px 24px 80px;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+  .logo span{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--maroon);}
+  h1{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-bottom:6px;}
+  p.sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:22px;}
+  .banner{font-size:13px;padding:10px 14px;border-radius:10px;margin-bottom:16px;background:var(--sand);color:var(--ink-soft);display:none;}
+  .banner.show{display:block;}
+  .add-row{display:flex;gap:8px;margin-bottom:20px;}
+  .add-row input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;}
+  .add-row button{padding:10px 18px;border:none;border-radius:100px;background:var(--maroon);color:#fff;font-weight:600;font-size:13px;cursor:pointer;}
+  .add-row button:hover{background:var(--maroon-dark);}
+  .row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:8px;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--sand);color:var(--maroon);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+  .row-info{flex:1;}
+  .row-info h4{font-size:14px;font-weight:600;}
+  .row-info p{font-size:12px;color:var(--ink-soft);}
+  .remove{background:#fff;border:1px solid var(--line);color:var(--ink);font-size:12px;font-weight:600;padding:7px 14px;border-radius:100px;cursor:pointer;}
+  .empty{text-align:center;padding:40px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo"><svg width="24" height="24" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/></svg><span>AVIKA admin</span></div>
+  <h1>Team</h1>
+  <p class="sub">People helping run your kitchen — cooks, delivery, front desk.</p>
+  <div class="banner" id="banner" role="status"></div>
+
+  <div class="add-row">
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="role" placeholder="Role (e.g. Cook)">
+    <input type="text" id="phone" placeholder="Phone">
+    <button onclick="addEmp()">Add</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+<script>
+  var kitchenId = null;
+
+  async function load(){
+    var banner = document.getElementById('banner');
+    if (typeof Avika === 'undefined' || !Avika.auth.isLoggedIn()){
+      banner.className = 'banner show'; banner.textContent = 'Log in as a cook to manage your team.';
+      return;
+    }
+    var res = await Avika.kitchens.mine();
+    if (!res.ok){
+      banner.className = 'banner show';
+      banner.textContent = res.error.indexOf('not set up') > -1
+        ? 'Set up your kitchen first (My kitchen in the sidebar), then come back here.'
+        : res.error;
+      return;
+    }
+    kitchenId = res.data._id;
+    render(res.data.employees || []);
+  }
+
+  function render(employees){
+    var list = document.getElementById('list');
+    if (!employees.length){ list.innerHTML = '<div class="empty">No team members yet.</div>'; return; }
+    list.innerHTML = employees.map(function(e){
+      var initials = e.name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      return '<div class="row">' +
+        '<div class="avatar">' + initials + '</div>' +
+        '<div class="row-info"><h4>' + e.name + '</h4><p>' + (e.role || 'Cook') + (e.phone ? ' · ' + e.phone : '') + '</p></div>' +
+        '<button class="remove" onclick="removeEmp(\'' + e._id + '\')">Remove</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function addEmp(){
+    if (!kitchenId) return;
+    var name = document.getElementById('name').value.trim();
+    if (!name) return;
+    var res = await Avika.kitchens.addEmployee(kitchenId, {
+      name: name,
+      role: document.getElementById('role').value.trim() || 'Cook',
+      phone: document.getElementById('phone').value.trim()
+    });
+    if (!res.ok){ alert(res.error); return; }
+    document.getElementById('name').value = '';
+    document.getElementById('role').value = '';
+    document.getElementById('phone').value = '';
+    render(res.data);
+  }
+
+  async function removeEmp(id){
+    var res = await Avika.kitchens.removeEmployee(kitchenId, id);
+    if (!res.ok){ alert(res.error); return; }
+    render(res.data);
+  }
+
+  load();
+</script>
+</body>
+</html>

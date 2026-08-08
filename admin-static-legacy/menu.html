@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --maroon:#7C1B3B; --maroon-dark:#591327; --teal:#1B7A8C; --teal-dark:#135A68;
+    --cream:#FBF6EC; --sand:#F1E7D6; --ink:#2B1720; --ink-soft:#6B5A61; --gold:#C4903E;
+    --line:rgba(43,23,32,0.1); --radius-md:14px;
+    --font-display:'Fraunces',serif; --font-body:'Inter',sans-serif;
+    --sidebar:#2A1019; --sidebar-text:#E7C3CB;
+    --success:#3B6D11; --success-bg:#EAF3DE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--cream); color:var(--ink);}
+  a{color:inherit; text-decoration:none;}
+  .shell{display:grid; grid-template-columns:250px 1fr; min-height:100vh;}
+  .sidebar{background:var(--sidebar); color:var(--sidebar-text); padding:26px 18px; display:flex; flex-direction:column;}
+  .side-logo{display:flex; align-items:center; gap:10px; padding:0 10px 30px;}
+  .side-logo span{font-family:var(--font-display); font-weight:700; font-size:19px; color:#fff;}
+  .side-nav{display:flex; flex-direction:column; gap:2px;}
+  .side-link{display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; font-size:14px; font-weight:500; color:var(--sidebar-text); cursor:pointer;}
+  .side-link svg{width:18px; height:18px; flex:0 0 auto;}
+  .side-link:hover{background:rgba(255,255,255,0.06);}
+  .side-link.active{background:var(--maroon); color:#fff;}
+  .side-section{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#9A7480; padding:20px 14px 8px;}
+  .side-bottom{margin-top:auto; padding:14px 10px 0; border-top:1px solid rgba(255,255,255,0.1);}
+  .side-user{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .avatar{width:34px; height:34px; border-radius:50%; background:var(--gold); color:var(--maroon-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
+  .side-user h5{font-size:13px; font-weight:600; color:#fff;}
+  .side-user p{font-size:11.5px; color:#9A7480;}
+
+  main{padding:32px 36px 60px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .topbar h1{font-family:var(--font-display); font-weight:600; font-size:26px;}
+  .topbar p{font-size:13.5px; color:var(--ink-soft); margin-top:2px;}
+  .btn{display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; padding:11px 20px; border-radius:100px; border:none; background:var(--maroon); color:#fff; cursor:pointer;}
+  .btn:hover{background:var(--maroon-dark);}
+
+  .cat-block{margin-bottom:30px;}
+  .cat-title{font-family:var(--font-display); font-size:17px; font-weight:600; margin-bottom:14px;}
+  .item-row{
+    display:flex; align-items:center; gap:16px; background:#fff; border:1px solid var(--line);
+    border-radius:var(--radius-md); padding:14px 18px; margin-bottom:10px;
+  }
+  .item-thumb{width:46px; height:46px; border-radius:10px; background:var(--sand); flex:0 0 auto;}
+  .item-info{flex:1;}
+  .item-info h4{font-size:14.5px; font-weight:600;}
+  .item-info p{font-size:12.5px; color:var(--ink-soft);}
+  .item-price{font-weight:600; font-size:14px; width:70px;}
+  .avail-switch{position:relative; width:38px; height:22px; background:var(--success); border-radius:100px; cursor:pointer; flex:0 0 auto;}
+  .avail-switch::after{content:""; position:absolute; top:2px; left:18px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s ease;}
+  .avail-switch.off{background:var(--line);}
+  .avail-switch.off::after{left:2px;}
+  .icon-btn{width:32px; height:32px; border-radius:8px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .icon-btn:hover{border-color:var(--maroon);}
+
+  /* modal */
+  .overlay{position:fixed; inset:0; background:rgba(43,23,32,0.35); display:none; align-items:center; justify-content:center; z-index:80;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--cream); border-radius:18px; width:440px; max-width:92vw; padding:28px;}
+  .modal h3{font-family:var(--font-display); font-size:20px; font-weight:600; margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  label{font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px;}
+  input, select, textarea{width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:14px; background:#fff;}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+  .btn-ghost{background:#fff; color:var(--ink); border:1px solid var(--line); flex:1;}
+  .btn-ghost:hover{background:var(--sand);}
+  .modal-actions .btn{flex:1;}
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .avail-switch:focus-visible{
+    outline:2px solid var(--teal); outline-offset:2px;
+  }
+
+  @media (max-width:1000px){ .shell{grid-template-columns:1fr;} .sidebar{display:none;} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="side-logo">
+      <svg width="26" height="26" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#F3DFE4"/><circle cx="24" cy="20" r="6" fill="#2A1019"/><path d="M24 26 C24 26 16 30 16 36" stroke="#2A1019" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/></svg>
+      <span>AVIKA <span style="font-size:11px; color:#9A7480; font-weight:500;">admin</span></span>
+    </div>
+    <nav class="side-nav">
+      <a href="admin-dashboard.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="admin-orders.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v4a4 4 0 0 1-4 4h-2v8h-4v-8H8a4 4 0 0 1-4-4V4z"/></svg>
+        Orders
+      </a>
+      <a href="admin-menu.html" class="side-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Menu
+      </a>
+      <div class="side-section">Manage</div>
+      <a href="approvals.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Approvals
+      </a>
+      <a href="../frontend/kitchen-setup.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        My kitchen
+      </a>
+      <a href="team.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        Team
+      </a>
+      <a href="#" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Settings
+      </a>
+    </nav>
+    <div class="side-bottom">
+      <div class="side-user">
+        <div class="avatar">MK</div>
+        <div><h5>Meera Krishnan</h5><p>Meera's Tiffin Box</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Menu</h1>
+        <p>What's available to order right now.</p>
+      </div>
+      <button class="btn" onclick="openModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        Add item
+      </button>
+    </div>
+
+    <div id="menu-list"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h3 id="modal-title">Add menu item</h3>
+    <form id="item-form">
+      <div class="field">
+        <label for="f-name">Name</label>
+        <input type="text" id="f-name" placeholder="e.g. Curd Rice Box" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f-category">Category</label>
+          <select id="f-category">
+            <option>Today's tiffin</option>
+            <option>Sides & extras</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-price">Price (₹)</label>
+          <input type="text" id="f-price" placeholder="90" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-desc">Description</label>
+        <textarea id="f-desc" rows="2" placeholder="Short description shown to customers"></textarea>
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; font-weight:500; color:var(--ink); cursor:pointer;">
+        <input type="checkbox" id="f-special" style="width:auto;"> Mark as today's special
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn">Save item</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  var MENU = [
+    { id:1, cat:"Today's tiffin", name:'South Indian Thali', desc:'Rice, sambar, rasam, 2 curries, curd, papad', price:150, available:true, special:true },
+    { id:2, cat:"Today's tiffin", name:'Curd Rice Box', desc:'Fresh curd rice with tempering and pickle', price:90, available:true },
+    { id:3, cat:"Today's tiffin", name:'Lemon Rice Box', desc:'Tangy lemon rice with peanuts and curry leaves', price:90, available:false },
+    { id:4, cat:"Today's tiffin", name:'Mini Idli Sambar', desc:'12 mini idlis with sambar and chutney', price:110, available:true },
+    { id:5, cat:'Sides & extras', name:'Papad (2 pcs)', desc:'Roasted papad', price:20, available:true },
+    { id:6, cat:'Sides & extras', name:'Buttermilk', desc:'Spiced buttermilk, 250ml', price:30, available:true },
+    { id:7, cat:'Sides & extras', name:'Payasam Cup', desc:'Semiya payasam, small cup', price:45, available:true }
+  ];
+
+  function render(){
+    var container = document.getElementById('menu-list');
+    container.innerHTML = '';
+    var cats = [...new Set(MENU.map(function(m){ return m.cat; }))];
+
+    cats.forEach(function(cat){
+      var block = document.createElement('div');
+      block.className = 'cat-block';
+      var itemsHtml = MENU.filter(function(m){ return m.cat === cat; }).map(function(item){
+        return '<div class="item-row">' +
+          '<div class="item-thumb"></div>' +
+          '<div class="item-info"><h4>' + item.name + (item.special ? ' <span style="font-size:10px;font-weight:700;color:#C4903E;background:rgba(196,144,62,0.15);padding:2px 7px;border-radius:100px;">★ Special</span>' : '') + '</h4><p>' + item.desc + '</p></div>' +
+          '<div class="item-price">\u20B9' + item.price + '</div>' +
+          '<div class="avail-switch ' + (item.available ? '' : 'off') + '" onclick="toggleAvailable(' + item.id + ')"></div>' +
+          '<button class="icon-btn" aria-label="Delete ' + item.name + '" onclick="removeItem(' + item.id + ')">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7C1B3B" stroke-width="1.8" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>' +
+          '</button>' +
+        '</div>';
+      }).join('');
+      block.innerHTML = '<div class="cat-title">' + cat + '</div>' + itemsHtml;
+      container.appendChild(block);
+    });
+  }
+
+  function toggleAvailable(id){
+    var item = MENU.find(function(m){ return m.id === id; });
+    item.available = !item.available;
+    render();
+  }
+
+  function removeItem(id){
+    MENU = MENU.filter(function(m){ return m.id !== id; });
+    render();
+  }
+
+  function openModal(){
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('f-name').focus();
+  }
+  function closeModal(){
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('item-form').reset();
+  }
+  document.getElementById('overlay').addEventListener('click', function(e){ if (e.target.id === 'overlay') closeModal(); });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && document.getElementById('overlay').classList.contains('open')) closeModal();
+  });
+
+  document.getElementById('item-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('f-name').value.trim();
+    var price = Number(document.getElementById('f-price').value);
+    var cat = document.getElementById('f-category').value;
+    var desc = document.getElementById('f-desc').value.trim();
+    if (!name || !price) return;
+
+    MENU.push({ id: Date.now(), cat: cat, name: name, desc: desc || 'No description yet', price: price, available: true, special: document.getElementById('f-special').checked });
+    render();
+    closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>

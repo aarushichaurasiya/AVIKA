@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{
+    --maroon:#7C1B3B; --maroon-dark:#591327; --teal:#1B7A8C; --teal-dark:#135A68;
+    --cream:#FBF6EC; --sand:#F1E7D6; --ink:#2B1720; --ink-soft:#6B5A61; --gold:#C4903E;
+    --line:rgba(43,23,32,0.1); --radius-md:14px;
+    --font-display:'Fraunces',serif; --font-body:'Inter',sans-serif;
+    --sidebar:#2A1019; --sidebar-text:#E7C3CB;
+    --success:#3B6D11; --success-bg:#EAF3DE; --warning:#854F0B; --warning-bg:#FAEEDA; --danger:#A32D2D; --danger-bg:#FCEBEB;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--cream); color:var(--ink);}
+  a{color:inherit; text-decoration:none;}
+  .shell{display:grid; grid-template-columns:250px 1fr; min-height:100vh;}
+  .sidebar{background:var(--sidebar); color:var(--sidebar-text); padding:26px 18px; display:flex; flex-direction:column;}
+  .side-logo{display:flex; align-items:center; gap:10px; padding:0 10px 30px;}
+  .side-logo span{font-family:var(--font-display); font-weight:700; font-size:19px; color:#fff;}
+  .side-nav{display:flex; flex-direction:column; gap:2px;}
+  .side-link{display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px; font-size:14px; font-weight:500; color:var(--sidebar-text); cursor:pointer;}
+  .side-link svg{width:18px; height:18px; flex:0 0 auto;}
+  .side-link:hover{background:rgba(255,255,255,0.06);}
+  .side-link.active{background:var(--maroon); color:#fff;}
+  .side-section{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#9A7480; padding:20px 14px 8px;}
+  .side-bottom{margin-top:auto; padding:14px 10px 0; border-top:1px solid rgba(255,255,255,0.1);}
+  .side-user{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .avatar{width:34px; height:34px; border-radius:50%; background:var(--gold); color:var(--maroon-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
+  .side-user h5{font-size:13px; font-weight:600; color:#fff;}
+  .side-user p{font-size:11.5px; color:#9A7480;}
+
+  main{padding:32px 36px 60px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px;}
+  .topbar h1{font-family:var(--font-display); font-weight:600; font-size:26px;}
+  .topbar p{font-size:13.5px; color:var(--ink-soft); margin-top:2px;}
+
+  .filter-row{display:flex; gap:10px; margin-bottom:20px;}
+  .filter-chip{padding:8px 18px; border-radius:100px; border:1px solid var(--line); background:#fff; font-size:13px; font-weight:600; cursor:pointer; color:var(--ink-soft);}
+  .filter-chip.active{background:var(--maroon); color:#fff; border-color:var(--maroon);}
+  .filter-chip:focus-visible, select:focus-visible, tr:focus-visible{outline:2px solid var(--teal); outline-offset:2px;}
+  .data-banner{font-size:12.5px; color:var(--ink-soft); background:var(--sand); padding:8px 14px; border-radius:8px; margin-bottom:16px; display:none;}
+  .data-banner.show{display:block;}
+
+  .panel{background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); overflow:hidden;}
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); padding:14px 20px; font-weight:600; background:var(--sand);}
+  td{padding:16px 20px; font-size:13.5px; border-top:1px solid var(--line); vertical-align:middle;}
+  tr.order-row{cursor:pointer;}
+  tr.order-row:hover{background:rgba(124,27,59,0.02);}
+  .status-pill{font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:100px; display:inline-block;}
+  .st-placed{color:var(--warning); background:var(--warning-bg);}
+  .st-confirmed{color:var(--teal-dark); background:rgba(27,122,140,0.1);}
+  .st-preparing,.st-ready{color:var(--teal-dark); background:rgba(27,122,140,0.1);}
+  .st-out_for_delivery{color:var(--gold); background:rgba(196,144,62,0.15);}
+  .st-delivered{color:var(--success); background:var(--success-bg);}
+  .st-cancelled{color:var(--danger); background:var(--danger-bg);}
+
+  .action-select{
+    font-family:var(--font-body); font-size:12.5px; font-weight:600; padding:7px 10px; border-radius:8px;
+    border:1px solid var(--line); background:var(--cream); color:var(--ink); cursor:pointer;
+  }
+  .detail-row td{background:var(--sand); font-size:13px; color:var(--ink-soft); padding:16px 20px;}
+  .detail-row{display:none;}
+  .detail-row.open{display:table-row;}
+
+  @media (max-width:1000px){ .shell{grid-template-columns:1fr;} .sidebar{display:none;} table{font-size:12.5px;} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="side-logo">
+      <svg width="26" height="26" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#F3DFE4"/><circle cx="24" cy="20" r="6" fill="#2A1019"/><path d="M24 26 C24 26 16 30 16 36" stroke="#2A1019" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/></svg>
+      <span>AVIKA <span style="font-size:11px; color:#9A7480; font-weight:500;">admin</span></span>
+    </div>
+    <nav class="side-nav">
+      <a href="admin-dashboard.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="admin-orders.html" class="side-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v4a4 4 0 0 1-4 4h-2v8h-4v-8H8a4 4 0 0 1-4-4V4z"/></svg>
+        Orders
+      </a>
+      <a href="admin-menu.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Menu
+      </a>
+      <div class="side-section">Manage</div>
+      <a href="approvals.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Approvals
+      </a>
+      <a href="../frontend/kitchen-setup.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        My kitchen
+      </a>
+      <a href="team.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        Team
+      </a>
+      <a href="#" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Settings
+      </a>
+    </nav>
+    <div class="side-bottom">
+      <div class="side-user">
+        <div class="avatar">MK</div>
+        <div><h5>Meera Krishnan</h5><p>Meera's Tiffin Box</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Orders</h1>
+        <p>Advance an order's status as it moves through your kitchen.</p>
+      </div>
+    </div>
+
+    <div class="filter-row" id="filters">
+      <div class="filter-chip active" data-status="all" tabindex="0" role="button">All</div>
+      <div class="filter-chip" data-status="placed" tabindex="0" role="button">Placed</div>
+      <div class="filter-chip" data-status="preparing" tabindex="0" role="button">Preparing</div>
+      <div class="filter-chip" data-status="out_for_delivery" tabindex="0" role="button">Out for delivery</div>
+      <div class="filter-chip" data-status="delivered" tabindex="0" role="button">Delivered</div>
+      <div class="filter-chip" data-status="cancelled" tabindex="0" role="button">Cancelled</div>
+    </div>
+
+    <div class="data-banner" id="data-banner" role="status"></div>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Placed</th><th>Status</th><th>Update</th></tr></thead>
+        <tbody id="order-body"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  var STATUS_FLOW = ['placed','confirmed','preparing','ready','out_for_delivery','delivered'];
+  var STATUS_LABEL = {
+    placed:'Placed', confirmed:'Confirmed', preparing:'Preparing', ready:'Ready',
+    out_for_delivery:'Out for delivery', delivered:'Delivered', cancelled:'Cancelled'
+  };
+
+  var ORDERS = [
+    { id:'#AV1042', customer:'Priya S.', items:'2× Thali, 1× Payasam', total:345, placed:'2 min ago', status:'preparing', address:'12 Cross St, RS Puram', phone:'+91 98765 43210' },
+    { id:'#AV1041', customer:'Arun K.', items:'1× Curd Rice Box', total:90, placed:'6 min ago', status:'placed', address:'Ganapathy, Coimbatore', phone:'+91 98765 43211' },
+    { id:'#AV1040', customer:'Divya R.', items:'3× Thali', total:450, placed:'40 min ago', status:'delivered', address:'Peelamedu, Coimbatore', phone:'+91 98765 43212' },
+    { id:'#AV1039', customer:'Karthik M.', items:'1× Idli Sambar', total:110, placed:'55 min ago', status:'delivered', address:'Race Course, Coimbatore', phone:'+91 98765 43213' },
+    { id:'#AV1038', customer:'Sneha P.', items:'2× Curd Rice Box', total:180, placed:'1 hr ago', status:'cancelled', address:'Saibaba Colony', phone:'+91 98765 43214' },
+    { id:'#AV1037', customer:'Rahul T.', items:'1× Thali, 2× Payasam', total:240, placed:'2 hr ago', status:'out_for_delivery', address:'Gandhipuram', phone:'+91 98765 43215' }
+  ];
+
+  var activeFilter = 'all';
+
+  function nextStatusOptions(current){
+    if (current === 'delivered' || current === 'cancelled') return [current];
+    var idx = STATUS_FLOW.indexOf(current);
+    return STATUS_FLOW.slice(idx);
+  }
+
+  function render(){
+    var body = document.getElementById('order-body');
+    body.innerHTML = '';
+    var visible = ORDERS.filter(function(o){ return activeFilter === 'all' || o.status === activeFilter; });
+
+    visible.forEach(function(o, i){
+      var row = document.createElement('tr');
+      row.className = 'order-row';
+      row.innerHTML =
+        '<td>' + o.id + '</td>' +
+        '<td>' + o.customer + '</td>' +
+        '<td>' + o.items + '</td>' +
+        '<td>\u20B9' + o.total + '</td>' +
+        '<td>' + o.placed + '</td>' +
+        '<td><span class="status-pill st-' + o.status + '">' + STATUS_LABEL[o.status] + '</span></td>' +
+        '<td><select class="action-select" onchange="updateStatus(' + i + ', this.value)" ' + (o.status === 'delivered' || o.status === 'cancelled' ? 'disabled' : '') + '>' +
+          nextStatusOptions(o.status).map(function(s){ return '<option value="' + s + '"' + (s === o.status ? ' selected' : '') + '>' + STATUS_LABEL[s] + '</option>'; }).join('') +
+        '</select></td>';
+      row.addEventListener('click', function(e){
+        if (e.target.tagName === 'SELECT') return;
+        var detail = document.getElementById('detail-' + i);
+        detail.classList.toggle('open');
+      });
+      body.appendChild(row);
+
+      var detailRow = document.createElement('tr');
+      detailRow.className = 'detail-row';
+      detailRow.id = 'detail-' + i;
+      detailRow.innerHTML = '<td colspan="7">Deliver to: ' + o.address + ' &nbsp;·&nbsp; Phone: ' + o.phone + '</td>';
+      body.appendChild(detailRow);
+    });
+  }
+
+  function updateStatus(idx, newStatus){
+    var order = ORDERS.find(function(o, i){ return i === idx; });
+    ORDERS[idx].status = newStatus;
+    render();
+  }
+
+  document.getElementById('filters').addEventListener('click', function(e){
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    applyFilter(chip);
+  });
+  document.getElementById('filters').addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    e.preventDefault();
+    applyFilter(chip);
+  });
+  function applyFilter(chip){
+    document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+    chip.classList.add('active');
+    activeFilter = chip.dataset.status;
+    render();
+  }
+
+  // Attempt to load real orders for this kitchen. Falls back to the mock
+  // ORDERS array above (with a visible notice) if the backend isn't running
+  // or the cook isn't logged in — this page still demos fully either way.
+  async function tryLoadLiveOrders(){
+    var banner = document.getElementById('data-banner');
+    var KITCHEN_ID = 'demo-kitchen-meeras-tiffin-box';
+
+    if (typeof Avika === 'undefined' || !Avika.auth.isLoggedIn()){
+      banner.className = 'data-banner show';
+      banner.textContent = 'Showing sample data — log in as a cook to see live orders from the API.';
+      return;
+    }
+
+    var result = await Avika.orders.forKitchen(KITCHEN_ID);
+    if (!result.ok){
+      banner.className = 'data-banner show';
+      banner.textContent = 'Showing sample data — ' + result.error;
+      return;
+    }
+
+    // Map API order shape onto this page's row shape and re-render.
+    ORDERS = result.data.map(function(o){
+      return {
+        id: '#' + o._id.slice(-6).toUpperCase(),
+        customer: o.customer && o.customer.name || 'Customer',
+        items: o.items.map(function(i){ return i.quantity + '× ' + i.name; }).join(', '),
+        total: o.total,
+        placed: new Date(o.createdAt).toLocaleTimeString(),
+        status: o.status,
+        address: o.deliveryAddress.line1,
+        phone: o.deliveryAddress.phone
+      };
+    });
+    render();
+  }
+
+  render();
+  tryLoadLiveOrders();
+</script>
+</body>
+</html>

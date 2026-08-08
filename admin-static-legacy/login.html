@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{--maroon:#7C1B3B;--maroon-dark:#591327;--teal:#1B7A8C;--cream:#FBF6EC;--sand:#F1E7D6;--ink:#2B1720;--ink-soft:#6B5A61;--line:rgba(43,23,32,0.12);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--sidebar,#2A1019);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .card{background:var(--cream);width:380px;max-width:92vw;padding:40px 34px;border-radius:18px;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+  .logo span{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--maroon);}
+  h1{font-family:'Fraunces',serif;font-size:22px;font-weight:600;margin-bottom:4px;}
+  p.sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:22px;}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:6px;}
+  input{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:14px;font-family:inherit;}
+  input:focus-visible{outline:2px solid var(--teal);}
+  button{width:100%;padding:13px;border:none;border-radius:100px;background:var(--maroon);color:#fff;font-weight:600;font-size:14px;cursor:pointer;}
+  button:hover{background:var(--maroon-dark);}
+  button:disabled{opacity:0.6;cursor:not-allowed;}
+  .banner{display:none;font-size:13px;padding:11px 14px;border-radius:10px;margin-bottom:14px;}
+  .banner.show{display:block;}
+  .banner.error{background:#FCEBEB;color:#A32D2D;}
+  .banner.success{background:#EAF3DE;color:#3B6D11;}
+  .note{font-size:12px;color:var(--ink-soft);margin-top:16px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <svg width="24" height="24" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/></svg>
+    <span>AVIKA admin</span>
+  </div>
+  <h1 id="h1">Cook / admin sign in</h1>
+  <p class="sub" id="sub">Manage your kitchen's orders and menu.</p>
+  <div class="banner" id="banner" role="alert" aria-live="assertive"></div>
+  <form id="form">
+    <label for="nameField" id="nameLabel" style="display:none;">Full name</label>
+    <input type="text" id="nameField" placeholder="Your name" style="display:none;">
+    <label for="email">Email</label>
+    <input type="text" id="email" placeholder="aarushichaurasiya@gmail.com" autocomplete="username" required>
+    <label for="pw">Password</label>
+    <input type="password" id="pw" placeholder="password123" autocomplete="current-password" required>
+    <button type="submit" id="btn">Log in</button>
+  </form>
+  <p class="note">Seeded test cook: aarushichaurasiya@gmail.com / password123</p>
+  <p class="note" style="margin-top:6px;"><a href="#" id="toggleMode" style="color:var(--maroon);font-weight:600;">New kitchen? Create a cook account</a></p>
+</div>
+<script>
+  var mode = 'login';
+  document.getElementById('toggleMode').addEventListener('click', function(e){
+    e.preventDefault();
+    mode = mode === 'login' ? 'signup' : 'login';
+    document.getElementById('h1').textContent = mode === 'login' ? 'Cook / admin sign in' : 'Create your kitchen account';
+    document.getElementById('sub').textContent = mode === 'login' ? "Manage your kitchen's orders and menu." : 'Register as a cook, then set up your kitchen.';
+    document.getElementById('nameField').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('nameLabel').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('btn').textContent = mode === 'login' ? 'Log in' : 'Create account';
+    e.target.textContent = mode === 'login' ? 'New kitchen? Create a cook account' : 'Already have an account? Log in';
+  });
+
+  function banner(kind, msg){
+    var b = document.getElementById('banner');
+    b.className = 'banner show ' + kind;
+    b.textContent = msg;
+  }
+  document.getElementById('form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var btn = document.getElementById('btn');
+    btn.disabled = true; btn.textContent = mode === 'login' ? 'Logging in…' : 'Creating…';
+
+    var res = mode === 'login'
+      ? await Avika.auth.login(document.getElementById('email').value.trim(), document.getElementById('pw').value)
+      : await Avika.auth.register(document.getElementById('nameField').value.trim(), document.getElementById('email').value.trim(), document.getElementById('pw').value, 'cook');
+
+    btn.disabled = false; btn.textContent = mode === 'login' ? 'Log in' : 'Create account';
+    if (!res.ok){ banner('error', res.error); return; }
+    if (res.data.user.role !== 'cook' && res.data.user.role !== 'admin'){
+      banner('error', 'This account is not a cook or admin.');
+      return;
+    }
+    Avika.auth.saveSession(res.data);
+    banner('success', mode === 'login' ? 'Welcome back — redirecting…' : 'Account created — let\'s set up your kitchen…');
+    setTimeout(function(){
+      window.location.href = mode === 'login' ? 'dashboard.html' : '../frontend/kitchen-setup.html';
+    }, 500);
+  });
+</script>
+</body>
+</html>

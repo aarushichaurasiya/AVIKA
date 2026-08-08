@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your orders — Avika</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{--maroon:#7C1B3B;--teal-dark:#135A68;--cream:#FBF6EC;--sand:#F1E7D6;--ink:#2B1720;--ink-soft:#6B5A61;--line:rgba(43,23,32,0.12);
+    --success:#3B6D11;--success-bg:#EAF3DE;--warning:#854F0B;--warning-bg:#FAEEDA;--danger:#A32D2D;--danger-bg:#FCEBEB;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);}
+  .wrap{max-width:720px;margin:0 auto;padding:44px 24px 80px;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+  .logo span{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--maroon);}
+  h1{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-bottom:20px;}
+  .banner{font-size:13px;padding:11px 14px;border-radius:10px;margin-bottom:18px;background:var(--sand);color:var(--ink-soft);display:none;}
+  .banner.show{display:block;}
+  .order-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:14px;}
+  .order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .order-top h3{font-size:15px;font-weight:600;}
+  .order-meta{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .status-pill{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:100px;display:inline-block;}
+  .st-placed,.st-confirmed{color:var(--warning);background:var(--warning-bg);}
+  .st-preparing,.st-ready,.st-out_for_delivery{color:var(--teal-dark);background:rgba(27,122,140,0.1);}
+  .st-delivered{color:var(--success);background:var(--success-bg);}
+  .st-cancelled{color:var(--danger);background:var(--danger-bg);}
+  .track{display:flex;gap:4px;margin-top:12px;}
+  .track-step{flex:1;height:4px;border-radius:2px;background:var(--line);}
+  .track-step.done{background:var(--maroon);}
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <svg width="24" height="24" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/></svg>
+    <span>AVIKA</span>
+  </div>
+  <h1>Your orders</h1>
+  <div class="banner" id="banner" role="status"></div>
+  <div id="list"></div>
+</div>
+<script>
+  var FLOW = ['placed','confirmed','preparing','ready','out_for_delivery','delivered'];
+  var LABEL = {placed:'Placed',confirmed:'Confirmed',preparing:'Preparing',ready:'Ready',out_for_delivery:'Out for delivery',delivered:'Delivered',cancelled:'Cancelled'};
+
+  function fmt(n){ return '\u20B9' + n.toLocaleString('en-IN'); }
+
+  function renderOrders(orders){
+    var list = document.getElementById('list');
+    if (!orders.length){
+      list.innerHTML = '<div class="empty">No orders yet. <a href="index.html" style="color:var(--maroon);font-weight:600;">Browse kitchens →</a></div>';
+      return;
+    }
+    list.innerHTML = orders.map(function(o){
+      var doneIdx = FLOW.indexOf(o.status);
+      var track = FLOW.map(function(s, i){
+        return '<div class="track-step ' + (o.status !== 'cancelled' && i <= doneIdx ? 'done' : '') + '"></div>';
+      }).join('');
+      var items = (o.items || []).map(function(i){ return i.quantity + '× ' + i.name; }).join(', ');
+      return '<div class="order-card">' +
+        '<div class="order-top"><h3>' + (o.kitchen && o.kitchen.name || 'Order') + '</h3><span class="status-pill st-' + o.status + '">' + LABEL[o.status] + '</span></div>' +
+        '<div class="order-meta">' + items + ' · ' + fmt(o.total) + ' · ' + new Date(o.createdAt).toLocaleString() + '</div>' +
+        (o.status !== 'cancelled' ? '<div class="track">' + track + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  async function load(){
+    var banner = document.getElementById('banner');
+    if (typeof Avika === 'undefined' || !Avika.auth.isLoggedIn()){
+      banner.className = 'banner show';
+      banner.textContent = 'Log in to see your orders.';
+      banner.innerHTML += ' <a href="auth.html?redirect=orders.html" style="color:var(--maroon);font-weight:600;">Log in →</a>';
+      renderOrders([]);
+      return;
+    }
+    var res = await Avika.orders.mine();
+    if (!res.ok){
+      banner.className = 'banner show';
+      banner.textContent = res.error;
+      renderOrders([]);
+      return;
+    }
+    renderOrders(res.data);
+  }
+  load();
+</script>
+</body>
+</html>

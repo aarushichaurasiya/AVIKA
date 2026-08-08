@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Avika Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+  :root{
+    --maroon:#7C1B3B; --maroon-dark:#591327; --teal:#1B7A8C; --teal-dark:#135A68;
+    --cream:#FBF6EC; --sand:#F1E7D6; --ink:#2B1720; --ink-soft:#6B5A61; --gold:#C4903E;
+    --line:rgba(43,23,32,0.1); --radius-md:14px;
+    --font-display:'Fraunces',serif; --font-body:'Inter',sans-serif;
+    --sidebar:#2A1019; --sidebar-text:#E7C3CB;
+    --success:#3B6D11; --success-bg:#EAF3DE; --warning:#854F0B; --warning-bg:#FAEEDA; --danger:#A32D2D; --danger-bg:#FCEBEB;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--cream); color:var(--ink);}
+  a{color:inherit; text-decoration:none;}
+
+  .shell{display:grid; grid-template-columns:250px 1fr; min-height:100vh;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{background:var(--sidebar); color:var(--sidebar-text); padding:26px 18px; display:flex; flex-direction:column;}
+  .side-logo{display:flex; align-items:center; gap:10px; padding:0 10px 30px;}
+  .side-logo span{font-family:var(--font-display); font-weight:700; font-size:19px; color:#fff;}
+  .side-nav{display:flex; flex-direction:column; gap:2px;}
+  .side-link{
+    display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:10px;
+    font-size:14px; font-weight:500; color:var(--sidebar-text); cursor:pointer;
+  }
+  .side-link svg{width:18px; height:18px; flex:0 0 auto;}
+  .side-link:hover{background:rgba(255,255,255,0.06);}
+  .side-link.active{background:var(--maroon); color:#fff;}
+  .side-section{font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#9A7480; padding:20px 14px 8px;}
+  .side-bottom{margin-top:auto; padding:14px 10px 0; border-top:1px solid rgba(255,255,255,0.1);}
+  .side-user{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .avatar{width:34px; height:34px; border-radius:50%; background:var(--gold); color:var(--maroon-dark); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;}
+  .side-user h5{font-size:13px; font-weight:600; color:#fff;}
+  .side-user p{font-size:11.5px; color:#9A7480;}
+
+  /* ---------- Main ---------- */
+  main{padding:32px 36px 60px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:30px;}
+  .topbar h1{font-family:var(--font-display); font-weight:600; font-size:26px;}
+  .topbar p{font-size:13.5px; color:var(--ink-soft); margin-top:2px;}
+  .kitchen-toggle{display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line); border-radius:100px; padding:8px 16px;}
+  .switch{position:relative; width:38px; height:22px; background:var(--success); border-radius:100px; cursor:pointer;}
+  .switch::after{content:""; position:absolute; top:2px; left:18px; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s ease;}
+  .switch.off{background:var(--line);}
+  .switch.off::after{left:2px;}
+
+  .metric-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:28px;}
+  .metric-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); padding:20px;}
+  .metric-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
+  .metric-icon{width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center;}
+  .metric-icon svg{width:17px; height:17px;}
+  .metric-trend{font-size:12px; font-weight:600; padding:3px 9px; border-radius:100px;}
+  .trend-up{color:var(--success); background:var(--success-bg);}
+  .trend-down{color:var(--danger); background:var(--danger-bg);}
+  .metric-value{font-family:var(--font-display); font-size:26px; font-weight:600;}
+  .metric-label{font-size:13px; color:var(--ink-soft); margin-top:2px;}
+
+  .content-grid{display:grid; grid-template-columns:1.4fr 1fr; gap:20px;}
+  .panel{background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); padding:24px;}
+  .panel-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+  .panel-head h3{font-size:16px; font-weight:600;}
+  .panel-head a{font-size:13px; font-weight:600; color:var(--maroon);}
+
+  table{width:100%; border-collapse:collapse;}
+  th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); padding:0 0 10px; font-weight:600;}
+  td{padding:12px 0; font-size:13.5px; border-top:1px solid var(--line);}
+  .status-pill{font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:100px; display:inline-block;}
+  .st-placed,.st-confirmed{color:var(--warning); background:var(--warning-bg);}
+  .st-preparing,.st-ready{color:var(--teal-dark); background:rgba(27,122,140,0.1);}
+  .st-delivered{color:var(--success); background:var(--success-bg);}
+  .st-cancelled{color:var(--danger); background:var(--danger-bg);}
+
+  .top-dish{display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line);}
+  .top-dish:first-child{border-top:none; padding-top:0;}
+  .dish-rank{width:24px; height:24px; border-radius:6px; background:var(--sand); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--maroon);}
+  .dish-info{flex:1;}
+  .dish-info h5{font-size:13.5px; font-weight:600;}
+  .dish-info p{font-size:12px; color:var(--ink-soft);}
+  .dish-count{font-size:13px; font-weight:600;}
+
+  @media (max-width:1000px){ .shell{grid-template-columns:1fr;} .sidebar{display:none;} .metric-grid{grid-template-columns:repeat(2,1fr);} .content-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="side-logo">
+      <svg width="26" height="26" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#F3DFE4"/><circle cx="24" cy="20" r="6" fill="#2A1019"/><path d="M24 26 C24 26 16 30 16 36" stroke="#2A1019" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/></svg>
+      <span>AVIKA <span style="font-size:11px; color:#9A7480; font-weight:500;">admin</span></span>
+    </div>
+    <nav class="side-nav">
+      <a href="admin-dashboard.html" class="side-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="admin-orders.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v4a4 4 0 0 1-4 4h-2v8h-4v-8H8a4 4 0 0 1-4-4V4z"/></svg>
+        Orders
+      </a>
+      <a href="admin-menu.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        Menu
+      </a>
+      <div class="side-section">Manage</div>
+      <a href="approvals.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Approvals
+      </a>
+      <a href="../frontend/kitchen-setup.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        My kitchen
+      </a>
+      <a href="team.html" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><circle cx="18" cy="8" r="2.5"/></svg>
+        Team
+      </a>
+      <a href="#" class="side-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Settings
+      </a>
+    </nav>
+    <div class="side-bottom">
+      <div class="side-user">
+        <div class="avatar">MK</div>
+        <div><h5>Meera Krishnan</h5><p>Meera's Tiffin Box</p></div>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Good morning, Meera</h1>
+        <p>Here's how your kitchen is doing today.</p>
+      </div>
+      <div class="kitchen-toggle">
+        <span style="font-size:13px; font-weight:600;">Accepting orders</span>
+        <div class="switch" id="open-switch" onclick="this.classList.toggle('off')"></div>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon" style="background:rgba(124,27,59,0.1);"><svg viewBox="0 0 24 24" fill="none" stroke="#7C1B3B" stroke-width="1.8"><path d="M4 4h16v4a4 4 0 0 1-4 4h-2v8h-4v-8H8a4 4 0 0 1-4-4V4z"/></svg></div>
+          <span class="metric-trend trend-up">+12%</span>
+        </div>
+        <div class="metric-value">18</div>
+        <div class="metric-label">Orders today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon" style="background:rgba(196,144,62,0.15);"><svg viewBox="0 0 24 24" fill="none" stroke="#C4903E" stroke-width="1.8"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <span class="metric-trend trend-up">+8%</span>
+        </div>
+        <div class="metric-value">₹4,860</div>
+        <div class="metric-label">Revenue today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon" style="background:rgba(27,122,140,0.12);"><svg viewBox="0 0 24 24" fill="none" stroke="#1B7A8C" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <span class="metric-trend trend-down">-3 min</span>
+        </div>
+        <div class="metric-value">27 min</div>
+        <div class="metric-label">Avg prep time</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top">
+          <div class="metric-icon" style="background:var(--success-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="1.8"><path d="m12 17.3-6.2 3.3 1.2-6.9L2 8.9l7-1L12 1.5l3 6.4 7 1-5 4.8 1.2 6.9z"/></svg></div>
+          <span class="metric-trend trend-up">+0.1</span>
+        </div>
+        <div class="metric-value">4.9</div>
+        <div class="metric-label">Rating (320 reviews)</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="panel">
+        <div class="panel-head"><h3>Revenue, last 7 days</h3><a href="admin-orders.html">View orders</a></div>
+        <canvas id="revenueChart" height="230"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Top dishes this week</h3></div>
+        <div class="top-dish">
+          <div class="dish-rank">1</div>
+          <div class="dish-info"><h5>South Indian Thali</h5><p>₹150 each</p></div>
+          <div class="dish-count">64 sold</div>
+        </div>
+        <div class="top-dish">
+          <div class="dish-rank">2</div>
+          <div class="dish-info"><h5>Curd Rice Box</h5><p>₹90 each</p></div>
+          <div class="dish-count">41 sold</div>
+        </div>
+        <div class="top-dish">
+          <div class="dish-rank">3</div>
+          <div class="dish-info"><h5>Mini Idli Sambar</h5><p>₹110 each</p></div>
+          <div class="dish-count">29 sold</div>
+        </div>
+        <div class="top-dish">
+          <div class="dish-rank">4</div>
+          <div class="dish-info"><h5>Payasam Cup</h5><p>₹45 each</p></div>
+          <div class="dish-count">22 sold</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-head"><h3>Recent orders</h3><a href="admin-orders.html">View all →</a></div>
+      <table>
+        <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>#AV1042</td><td>Priya S.</td><td>2× Thali, 1× Payasam</td><td>₹345</td><td><span class="status-pill st-preparing">Preparing</span></td></tr>
+          <tr><td>#AV1041</td><td>Arun K.</td><td>1× Curd Rice</td><td>₹90</td><td><span class="status-pill st-confirmed">Confirmed</span></td></tr>
+          <tr><td>#AV1040</td><td>Divya R.</td><td>3× Thali</td><td>₹450</td><td><span class="status-pill st-delivered">Delivered</span></td></tr>
+          <tr><td>#AV1039</td><td>Karthik M.</td><td>1× Idli Sambar</td><td>₹110</td><td><span class="status-pill st-delivered">Delivered</span></td></tr>
+          <tr><td>#AV1038</td><td>Sneha P.</td><td>2× Curd Rice</td><td>₹180</td><td><span class="status-pill st-cancelled">Cancelled</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+  var ctx = document.getElementById('revenueChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        data: [3200, 2800, 4100, 3900, 4600, 5400, 4860],
+        borderColor: '#7C1B3B',
+        backgroundColor: 'rgba(124,27,59,0.08)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: '#7C1B3B'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: 'rgba(43,23,32,0.06)' }, ticks: { callback: (v) => '₹' + v } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+</script>
+</body>
+</html>

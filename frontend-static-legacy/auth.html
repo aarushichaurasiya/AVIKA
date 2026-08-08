@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in or sign up — Avika</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{
+    --maroon:#7C1B3B; --maroon-dark:#591327; --teal:#1B7A8C; --teal-dark:#135A68;
+    --cream:#FBF6EC; --sand:#F1E7D6; --ink:#2B1720; --ink-soft:#6B5A61; --gold:#C4903E;
+    --line:rgba(43,23,32,0.12); --radius-lg:22px; --radius-md:14px;
+    --font-display:'Fraunces',serif; --font-body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--maroon); color:var(--ink); min-height:100vh;}
+  a{color:inherit;}
+  .screen{display:grid; grid-template-columns:1fr 460px; min-height:100vh;}
+  .side{
+    position:relative; padding:56px; display:flex; flex-direction:column; justify-content:space-between;
+    color:#F3DFE4; overflow:hidden;
+  }
+  .logo{display:flex; align-items:center; gap:10px;}
+  .logo-word{font-family:var(--font-display); font-weight:700; font-size:20px; color:#fff;}
+  .side-copy{max-width:400px;}
+  .side-copy h2{font-family:var(--font-display); font-weight:600; font-size:34px; line-height:1.15; margin-bottom:14px;}
+  .side-copy p{font-size:15px; color:#E7C3CB;}
+  .route-decor{position:absolute; right:-80px; bottom:-80px; opacity:0.5;}
+
+  .panel{background:var(--cream); padding:56px 48px; display:flex; flex-direction:column; justify-content:center;}
+  .tabs{display:flex; background:var(--sand); border-radius:100px; padding:4px; margin-bottom:32px;}
+  .tab{flex:1; text-align:center; padding:10px; border-radius:100px; font-weight:600; font-size:14px; cursor:pointer; color:var(--ink-soft);}
+  .tab.active{background:var(--maroon); color:#fff;}
+
+  h1{font-family:var(--font-display); font-weight:600; font-size:26px; margin-bottom:6px;}
+  .sub{font-size:14px; color:var(--ink-soft); margin-bottom:28px;}
+
+  .field{margin-bottom:16px;}
+  label{font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px;}
+  input{
+    width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:10px;
+    font-family:var(--font-body); font-size:14px; background:#fff;
+  }
+  input:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  .error{font-size:12px; color:#A32D2D; margin-top:5px; display:none;}
+  .field.invalid input{border-color:#A32D2D;}
+  .field.invalid .error{display:block;}
+
+  .row-between{display:flex; justify-content:space-between; align-items:center; font-size:13px; margin-bottom:22px;}
+  .row-between a{color:var(--maroon); font-weight:600;}
+  .check{display:flex; align-items:center; gap:8px; color:var(--ink-soft);}
+
+  .btn{width:100%; padding:14px; border-radius:100px; border:none; background:var(--maroon); color:#fff; font-weight:600; font-size:15px; cursor:pointer;}
+  .btn:hover{background:var(--maroon-dark);}
+
+  .divider{display:flex; align-items:center; gap:12px; margin:24px 0; font-size:12.5px; color:var(--ink-soft);}
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--line);}
+  .oauth-row{display:flex; gap:12px;}
+  .oauth-btn{flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:13px; font-weight:600; cursor:pointer;}
+  .oauth-btn:hover{border-color:var(--ink);}
+
+  .switch-note{text-align:center; font-size:13.5px; color:var(--ink-soft); margin-top:26px;}
+  .switch-note a{color:var(--maroon); font-weight:600;}
+
+  #signup-fields{display:none;}
+
+  .form-banner{
+    display:none; align-items:flex-start; gap:10px; font-size:13px; padding:12px 14px;
+    border-radius:10px; margin-bottom:18px;
+  }
+  .form-banner.show{display:flex;}
+  .form-banner.error{background:#FCEBEB; color:#A32D2D;}
+  .form-banner.success{background:var(--success-bg, #EAF3DE); color:#3B6D11;}
+
+  .btn[disabled]{opacity:0.65; cursor:not-allowed;}
+  a:focus-visible, button:focus-visible, input:focus-visible, .tab:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--teal); outline-offset:2px;
+  }
+  .skip-link{
+    position:absolute; left:-999px; top:0; background:var(--maroon); color:#fff; padding:10px 16px;
+    border-radius:0 0 8px 0; z-index:200;
+  }
+  .skip-link:focus{left:0;}
+
+  @media (max-width:860px){ .screen{grid-template-columns:1fr;} .side{display:none;} .panel{padding:40px 24px;} }
+</style>
+</head>
+<body>
+
+<a href="#auth-form" class="skip-link">Skip to sign-in form</a>
+
+<div class="screen">
+  <div class="side">
+    <a href="index.html" class="logo">
+      <svg width="26" height="26" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#F3DFE4"/><circle cx="24" cy="20" r="6" fill="#591327"/><path d="M24 26 C24 26 16 30 16 36" stroke="#591327" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/></svg>
+      <span class="logo-word">AVIKA</span>
+    </a>
+    <div class="side-copy">
+      <h2>Homemade meals from kitchens near you</h2>
+      <p>Sign in to track your orders, save addresses, and reorder your favorites from local home cooks.</p>
+    </div>
+    <svg class="route-decor" width="320" height="320" viewBox="0 0 400 400" fill="none">
+      <path d="M40 40 C 120 90, 90 170, 180 200 S 290 300, 340 360" stroke="rgba(251,246,236,0.25)" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 22"/>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="tabs">
+      <div class="tab active" id="tab-login" onclick="setMode('login')">Log in</div>
+      <div class="tab" id="tab-signup" onclick="setMode('signup')">Sign up</div>
+    </div>
+
+    <h1 id="form-title">Welcome back</h1>
+    <p class="sub" id="form-sub">Log in to continue ordering from your favorite kitchens.</p>
+
+    <div class="form-banner" id="form-banner" role="alert" aria-live="assertive"></div>
+
+    <form id="auth-form" novalidate>
+      <div id="signup-fields">
+        <div class="field" id="field-name">
+          <label for="name">Full name</label>
+          <input type="text" id="name" placeholder="Your name" aria-describedby="name-error">
+          <div class="error" id="name-error">Enter your name.</div>
+        </div>
+      </div>
+
+      <div class="field" id="field-email">
+        <label for="email">Email</label>
+        <input type="text" id="email" placeholder="name@email.com" aria-describedby="email-error">
+        <div class="error" id="email-error">Enter a valid email address.</div>
+      </div>
+
+      <div class="field" id="field-password">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="At least 8 characters" aria-describedby="password-error">
+        <div class="error" id="password-error">Password must be at least 8 characters.</div>
+      </div>
+
+      <div class="row-between" id="login-extras">
+        <label class="check"><input type="checkbox" style="width:auto;"> Remember me</label>
+        <a href="#">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="btn" id="submit-btn">Log in</button>
+    </form>
+
+    <div class="divider">or continue with</div>
+    <div class="oauth-row">
+      <button class="oauth-btn">Google</button>
+      <button class="oauth-btn">Apple</button>
+    </div>
+
+    <p class="switch-note" id="switch-note">
+      New to Avika? <a href="#" onclick="setMode('signup'); return false;">Create an account</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  var mode = 'login';
+
+  function setMode(m){
+    mode = m;
+    document.getElementById('tab-login').classList.toggle('active', m === 'login');
+    document.getElementById('tab-signup').classList.toggle('active', m === 'signup');
+    document.getElementById('signup-fields').style.display = m === 'signup' ? 'block' : 'none';
+    document.getElementById('login-extras').style.display = m === 'login' ? 'flex' : 'none';
+    document.getElementById('form-title').textContent = m === 'login' ? 'Welcome back' : 'Create your account';
+    document.getElementById('form-sub').textContent = m === 'login'
+      ? 'Log in to continue ordering from your favorite kitchens.'
+      : 'Join Avika to order from home kitchens near you.';
+    document.getElementById('submit-btn').textContent = m === 'login' ? 'Log in' : 'Create account';
+    document.getElementById('switch-note').innerHTML = m === 'login'
+      ? 'New to Avika? <a href="#" onclick="setMode(\'signup\'); return false;">Create an account</a>'
+      : 'Already have an account? <a href="#" onclick="setMode(\'login\'); return false;">Log in</a>';
+  }
+
+  function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  function showBanner(kind, message){
+    var banner = document.getElementById('form-banner');
+    banner.className = 'form-banner show ' + kind;
+    banner.textContent = message;
+  }
+  function hideBanner(){
+    document.getElementById('form-banner').className = 'form-banner';
+  }
+
+  document.getElementById('auth-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    hideBanner();
+    var ok = true;
+
+    if (mode === 'signup'){
+      var name = document.getElementById('name').value.trim();
+      var nameField = document.getElementById('field-name');
+      var invalid1 = name.length === 0;
+      nameField.classList.toggle('invalid', invalid1);
+      document.getElementById('name').setAttribute('aria-invalid', invalid1);
+      if (invalid1) ok = false;
+    }
+
+    var email = document.getElementById('email').value.trim();
+    var emailField = document.getElementById('field-email');
+    var invalid2 = !validEmail(email);
+    emailField.classList.toggle('invalid', invalid2);
+    document.getElementById('email').setAttribute('aria-invalid', invalid2);
+    if (invalid2) ok = false;
+
+    var pw = document.getElementById('password').value;
+    var pwField = document.getElementById('field-password');
+    var invalid3 = pw.length < 8;
+    pwField.classList.toggle('invalid', invalid3);
+    document.getElementById('password').setAttribute('aria-invalid', invalid3);
+    if (invalid3) ok = false;
+
+    if (!ok) return;
+
+    var submitBtn = document.getElementById('submit-btn');
+    var originalLabel = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = mode === 'login' ? 'Logging in…' : 'Creating account…';
+
+    var result = mode === 'login'
+      ? await Avika.auth.login(email, pw)
+      : await Avika.auth.register(document.getElementById('name').value.trim(), email, pw);
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+
+    if (!result.ok){
+      showBanner('error', result.error);
+      return;
+    }
+
+    Avika.auth.saveSession(result.data);
+    showBanner('success', 'Success — redirecting…');
+    var redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+    setTimeout(function(){ window.location.href = redirectTo; }, 700);
+  });
+</script>
+</body>
+</html>

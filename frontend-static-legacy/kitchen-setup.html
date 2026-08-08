@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Kitchen — Avika</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="api.js" defer></script>
+<style>
+  :root{--maroon:#7C1B3B;--maroon-dark:#591327;--teal:#1B7A8C;--cream:#FBF6EC;--sand:#F1E7D6;--ink:#2B1720;--ink-soft:#6B5A61;--line:rgba(43,23,32,0.12);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);}
+  .wrap{max-width:640px;margin:0 auto;padding:44px 24px 80px;}
+  .logo{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+  .logo span{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--maroon);}
+  h1{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-bottom:6px;}
+  p.sub{font-size:13.5px;color:var(--ink-soft);margin-bottom:26px;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px 28px;}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin:14px 0 6px;}
+  label:first-child{margin-top:0;}
+  input,textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:var(--cream);}
+  input:focus-visible,textarea:focus-visible{outline:2px solid var(--teal);}
+  textarea{resize:vertical;min-height:70px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  button{margin-top:20px;width:100%;padding:13px;border:none;border-radius:100px;background:var(--maroon);color:#fff;font-weight:600;font-size:14px;cursor:pointer;}
+  button:hover{background:var(--maroon-dark);}
+  button:disabled{opacity:0.6;cursor:not-allowed;}
+  .banner{display:none;font-size:13px;padding:11px 14px;border-radius:10px;margin-bottom:16px;}
+  .banner.show{display:block;}
+  .banner.error{background:#FCEBEB;color:#A32D2D;}
+  .banner.success{background:#EAF3DE;color:#3B6D11;}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <svg width="24" height="24" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/></svg>
+    <span>AVIKA</span>
+  </div>
+  <h1>Your kitchen</h1>
+  <p class="sub">This is what customers see when they find you nearby.</p>
+  <div class="panel">
+    <div class="banner" id="banner" role="alert" aria-live="assertive"></div>
+    <form id="form">
+      <label for="name">Kitchen name</label>
+      <input type="text" id="name" required>
+
+      <label for="logoFile">Kitchen photo</label>
+      <input type="file" id="logoFile" accept="image/jpeg,image/png,image/webp">
+      <p class="hint" id="upload-status"></p>
+      <input type="hidden" id="logoUrl">
+
+      <label for="cuisine">Cuisine (comma separated)</label>
+      <input type="text" id="cuisine" placeholder="South Indian, Tiffin">
+
+      <label for="desc">Description</label>
+      <textarea id="desc" placeholder="What makes your kitchen worth ordering from"></textarea>
+
+      <label for="address">Address</label>
+      <input type="text" id="address" required>
+
+      <div class="row2">
+        <div>
+          <label for="lat">Latitude</label>
+          <input type="text" id="lat" placeholder="11.0138" required>
+        </div>
+        <div>
+          <label for="lng">Longitude</label>
+          <input type="text" id="lng" placeholder="76.9558" required>
+          <p class="hint">Find these from Google Maps: right-click a point → copy coordinates.</p>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="delivery">Delivery fee (₹)</label>
+          <input type="text" id="delivery" value="25">
+        </div>
+        <div>
+          <label for="freeAt">Free delivery over (₹)</label>
+          <input type="text" id="freeAt" value="300">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="minOrder">Minimum order (₹)</label>
+          <input type="text" id="minOrder" value="0">
+        </div>
+        <div>
+          <label for="prepTime">Avg prep time (min)</label>
+          <input type="text" id="prepTime" value="30">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <label for="opensAt">Opens at</label>
+          <input type="text" id="opensAt" placeholder="09:00" value="09:00">
+        </div>
+        <div>
+          <label for="closesAt">Closes at</label>
+          <input type="text" id="closesAt" placeholder="21:00" value="21:00">
+          <p class="hint">Same hours applied every day for now — per-day scheduling can come later.</p>
+        </div>
+      </div>
+
+      <button type="submit" id="btn">Save kitchen</button>
+    </form>
+  </div>
+</div>
+<script>
+  var params = new URLSearchParams(window.location.search);
+  var editId = params.get('id');
+
+  function banner(kind, msg){
+    var b = document.getElementById('banner');
+    b.className = 'banner show ' + kind;
+    b.textContent = msg;
+  }
+
+  document.getElementById('logoFile').addEventListener('change', async function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    var status = document.getElementById('upload-status');
+    status.textContent = 'Uploading…';
+    var res = await Avika.uploads.image(file);
+    if (!res.ok){ status.textContent = 'Upload failed: ' + res.error; return; }
+    document.getElementById('logoUrl').value = res.data.url;
+    status.textContent = 'Uploaded ✓ ' + res.data.url;
+  });
+
+  async function loadExisting(){
+    if (!editId) return;
+    var res = await Avika.kitchens.get(editId);
+    if (!res.ok){ banner('error', res.error); return; }
+    var k = res.data;
+    document.getElementById('name').value = k.name || '';
+    document.getElementById('cuisine').value = (k.cuisine || []).join(', ');
+    document.getElementById('desc').value = k.description || '';
+    document.getElementById('address').value = k.location && k.location.address || '';
+    document.getElementById('lat').value = k.location && k.location.coordinates[1] || '';
+    document.getElementById('lng').value = k.location && k.location.coordinates[0] || '';
+    document.getElementById('delivery').value = k.deliveryFee ?? 25;
+    document.getElementById('freeAt').value = k.freeDeliveryThreshold ?? 300;
+    document.getElementById('minOrder').value = k.minOrderAmount ?? 0;
+    document.getElementById('prepTime').value = k.avgPrepTimeMinutes ?? 30;
+    if (k.operatingHours && k.operatingHours[0]){
+      document.getElementById('opensAt').value = k.operatingHours[0].openTime || '09:00';
+      document.getElementById('closesAt').value = k.operatingHours[0].closeTime || '21:00';
+    }
+  }
+
+  document.getElementById('form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if (typeof Avika === 'undefined' || !Avika.auth.isLoggedIn()){
+      banner('error', 'Log in as a cook first.');
+      return;
+    }
+    var payload = {
+      name: document.getElementById('name').value.trim(),
+      logoUrl: document.getElementById('logoUrl').value || undefined,
+      cuisine: document.getElementById('cuisine').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean),
+      description: document.getElementById('desc').value.trim(),
+      location: {
+        type: 'Point',
+        coordinates: [Number(document.getElementById('lng').value), Number(document.getElementById('lat').value)],
+        address: document.getElementById('address').value.trim()
+      },
+      deliveryFee: Number(document.getElementById('delivery').value) || 0,
+      freeDeliveryThreshold: Number(document.getElementById('freeAt').value) || 0,
+      minOrderAmount: Number(document.getElementById('minOrder').value) || 0,
+      avgPrepTimeMinutes: Number(document.getElementById('prepTime').value) || 30,
+      operatingHours: [0,1,2,3,4,5,6].map(function(day){
+        return { day: day, openTime: document.getElementById('opensAt').value.trim(), closeTime: document.getElementById('closesAt').value.trim() };
+      })
+    };
+
+    var btn = document.getElementById('btn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    var res = editId ? await Avika.kitchens.update(editId, payload) : await Avika.kitchens.create(payload);
+    btn.disabled = false; btn.textContent = 'Save kitchen';
+
+    if (!res.ok){ banner('error', res.error); return; }
+    banner('success', editId ? 'Saved. Redirecting…' : 'Saved — pending admin approval before it goes live. Redirecting…');
+    setTimeout(function(){ window.location.href = 'index.html'; }, 1200);
+  });
+
+  loadExisting();
+</script>
+</body>
+</html>

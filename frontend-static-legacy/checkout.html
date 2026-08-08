@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — Avika</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<script src="api.js" defer></script>
+<style>
+  :root{
+    --maroon:#7C1B3B; --maroon-dark:#591327; --teal:#1B7A8C; --teal-dark:#135A68;
+    --cream:#FBF6EC; --sand:#F1E7D6; --ink:#2B1720; --ink-soft:#6B5A61; --gold:#C4903E;
+    --line:rgba(43,23,32,0.12); --radius-lg:22px; --radius-md:14px;
+    --font-display:'Fraunces',serif; --font-body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--cream); color:var(--ink); line-height:1.6;}
+  a{color:inherit; text-decoration:none;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+  .logo{display:flex; align-items:center; gap:10px;}
+  .logo-word{font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--maroon);}
+  header{padding:20px 0; border-bottom:1px solid var(--line);}
+  nav{display:flex; align-items:center; justify-content:space-between;}
+  .step-track{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-soft); font-weight:500;}
+  .step-track .on{color:var(--maroon); font-weight:600;}
+
+  main{padding:44px 0 90px;}
+  h1{font-family:var(--font-display); font-weight:600; font-size:30px; margin-bottom:34px;}
+  .layout{display:grid; grid-template-columns:1fr 380px; gap:40px;}
+
+  .panel{background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); padding:26px 28px; margin-bottom:22px;}
+  .panel-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .panel-head h3{font-size:16px; font-weight:600;}
+  .panel-head .edit{font-size:13px; font-weight:600; color:var(--maroon); cursor:pointer;}
+
+  .addr-option{
+    display:flex; gap:12px; align-items:flex-start; padding:14px; border:1.5px solid var(--line);
+    border-radius:12px; margin-bottom:10px; cursor:pointer;
+  }
+  .addr-option.selected{border-color:var(--maroon); background:rgba(124,27,59,0.04);}
+  .addr-option input{margin-top:3px;}
+  .addr-option h4{font-size:14px; font-weight:600; margin-bottom:2px;}
+  .addr-option p{font-size:13px; color:var(--ink-soft);}
+  .addr-tag{font-size:11px; font-weight:700; color:var(--teal-dark); background:rgba(27,122,140,0.1); padding:2px 8px; border-radius:100px; margin-left:8px;}
+
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+  label{font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:6px;}
+  input[type=text], textarea{
+    width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:10px;
+    font-family:var(--font-body); font-size:14px; background:var(--cream);
+  }
+  input:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px;}
+  textarea{resize:vertical; min-height:70px;}
+
+  .pay-option{
+    display:flex; align-items:center; gap:12px; padding:14px; border:1.5px solid var(--line);
+    border-radius:12px; margin-bottom:10px; cursor:pointer;
+  }
+  .pay-option.selected{border-color:var(--maroon); background:rgba(124,27,59,0.04);}
+  .pay-option svg{flex:0 0 auto;}
+  .pay-option h4{font-size:14px; font-weight:600;}
+  .pay-option p{font-size:12.5px; color:var(--ink-soft);}
+
+  .summary-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius-md); padding:24px; position:sticky; top:24px;}
+  .summary-card h3{font-family:var(--font-display); font-weight:600; font-size:18px; margin-bottom:16px;}
+  .sum-item{display:flex; justify-content:space-between; font-size:13.5px; margin-bottom:10px;}
+  .sum-item .qty{color:var(--ink-soft);}
+  .sum-divider{border-top:1px solid var(--line); margin:14px 0;}
+  .sum-row{display:flex; justify-content:space-between; font-size:14px; color:var(--ink-soft); margin-bottom:8px;}
+  .sum-row.total{font-size:17px; font-weight:600; color:var(--ink); padding-top:10px; border-top:1px solid var(--line); margin-top:6px;}
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; font-weight:600; font-size:15px; padding:14px; border-radius:100px; border:none; background:var(--maroon); color:#fff; cursor:pointer; margin-top:18px;}
+  .btn:hover{background:var(--maroon-dark);}
+  .eta{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--teal-dark); margin-top:14px; background:rgba(27,122,140,0.08); padding:10px 12px; border-radius:10px;}
+
+  .form-banner{display:none; font-size:13px; padding:12px 14px; border-radius:10px; margin-bottom:16px;}
+  .form-banner.show{display:block;}
+  .form-banner.error{background:#FCEBEB; color:#A32D2D;}
+  .form-banner.success{background:#EAF3DE; color:#3B6D11;}
+  .btn[disabled]{opacity:0.6; cursor:not-allowed;}
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, [role=radio]:focus-visible{
+    outline:2px solid var(--teal); outline-offset:2px;
+  }
+
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} .field-row{grid-template-columns:1fr;} .step-track{display:none;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <a href="index.html" class="logo">
+        <svg width="26" height="26" viewBox="0 0 48 48"><path d="M24 4 L42 40 L6 40 Z" fill="#7C1B3B"/><circle cx="24" cy="20" r="6" fill="#FBF6EC"/><path d="M24 26 C24 26 16 30 16 36" stroke="#FBF6EC" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 5"/></svg>
+        <span class="logo-word">AVIKA</span>
+      </a>
+      <div class="step-track">
+        <span>Cart</span> → <span class="on">Checkout</span> → <span>Confirmation</span>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Checkout</h1>
+  <div class="layout">
+
+    <div>
+      <div class="panel">
+        <div class="panel-head"><h3>Delivery address</h3><span class="edit">Add new</span></div>
+
+        <label class="addr-option selected">
+          <input type="radio" name="addr" checked>
+          <div>
+            <h4>Home <span class="addr-tag">Default</span></h4>
+            <p>14 Race Course Road, RS Puram, Coimbatore, TN 641002</p>
+          </div>
+        </label>
+        <label class="addr-option">
+          <input type="radio" name="addr">
+          <div>
+            <h4>Work</h4>
+            <p>Tidel Park, Coimbatore, TN 641014</p>
+          </div>
+        </label>
+
+        <div class="field-row">
+          <div>
+            <label for="landmark">Landmark (optional)</label>
+            <input type="text" id="landmark" placeholder="Near Brookefields Mall">
+          </div>
+          <div>
+            <label for="phone">Phone number</label>
+            <input type="text" id="phone" placeholder="+91 98765 43210">
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <label for="note">Delivery instructions (optional)</label>
+          <textarea id="note" placeholder="Ring the bell twice, leave at the door, etc."></textarea>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>Payment method</h3></div>
+
+        <label class="pay-option selected">
+          <input type="radio" name="pay" checked>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C1B3B" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          <div><h4>Card</h4><p>Visa, Mastercard, RuPay</p></div>
+        </label>
+        <label class="pay-option">
+          <input type="radio" name="pay">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C1B3B" stroke-width="1.8"><path d="M12 2v20M2 12h20"/></svg>
+          <div><h4>UPI</h4><p>Google Pay, PhonePe, Paytm</p></div>
+        </label>
+        <label class="pay-option">
+          <input type="radio" name="pay">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C1B3B" stroke-width="1.8"><path d="M3 6h18v12H3z"/><path d="M3 10h18"/></svg>
+          <div><h4>Cash on delivery</h4><p>Pay when your order arrives</p></div>
+        </label>
+
+        <div id="stripe-element-wrap" style="display:none; margin-top:14px;">
+          <div id="payment-element"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3 id="summary-kitchen-name">Order from Meera's Tiffin Box</h3>
+      <div id="summary-items">
+        <div class="sum-item"><span><span class="qty">2×</span> South Indian Thali</span><span>₹300</span></div>
+        <div class="sum-item"><span><span class="qty">1×</span> Payasam Cup</span><span>₹45</span></div>
+      </div>
+      <div class="sum-divider"></div>
+      <div class="sum-row"><span>Subtotal</span><span id="sum-subtotal">₹345</span></div>
+      <div class="sum-row"><span>Delivery fee</span><span id="sum-delivery">Free</span></div>
+      <div class="sum-row"><span>Taxes</span><span id="sum-taxes">₹17</span></div>
+      <div class="sum-row total"><span>Total</span><span id="sum-total">₹362</span></div>
+
+      <div class="form-banner" id="order-banner" role="alert" aria-live="assertive"></div>
+
+      <button class="btn" id="place-order-btn">Place order</button>
+      <div class="eta">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#135A68" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 2"/></svg>
+        Estimated delivery in 28–35 minutes
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // Static menu prices — mirrors cart.html's demo MENU, since this page
+  // reads only { menuItemId: qty } from localStorage. Once connected to
+  // the live API, this would come from Avika.kitchens.menu(kitchenId).
+  var DEMO_MENU = {
+    m1: { name: 'South Indian Thali', price: 150 },
+    m2: { name: 'Curd Rice Box', price: 90 },
+    m3: { name: 'Lemon Rice Box', price: 90 },
+    m4: { name: 'Mini Idli Sambar', price: 110 },
+    m5: { name: 'Papad (2 pcs)', price: 20 },
+    m6: { name: 'Buttermilk', price: 30 },
+    m7: { name: 'Payasam Cup', price: 45 }
+  };
+  var KITCHEN_ID = (function(){
+    try { return localStorage.getItem('avika_active_kitchen') || 'demo-kitchen-meeras-tiffin-box'; }
+    catch (e) { return 'demo-kitchen-meeras-tiffin-box'; }
+  })();
+  var DELIVERY_FEE = 25, FREE_DELIVERY_AT = 300, TAX_RATE = 0.05;
+  var MENU_LOOKUP = Object.assign({}, DEMO_MENU); // overwritten with live data if the API responds
+
+  async function loadLiveMenuLookup(){
+    if (typeof Avika === 'undefined') return;
+    var res = await Avika.kitchens.menu(KITCHEN_ID);
+    if (res.ok && res.data && res.data.length){
+      MENU_LOOKUP = {};
+      res.data.forEach(function(item){ MENU_LOOKUP[item._id] = { name: item.name, price: item.price }; });
+    }
+  }
+
+  function fmt(n){ return '\u20B9' + n.toLocaleString('en-IN'); }
+
+  function loadCart(){
+    var all = (typeof Avika !== 'undefined') ? Avika.cart.get() : {};
+    return all[KITCHEN_ID] || { m1: 2, m7: 1 }; // fallback demo cart if nothing saved yet
+  }
+
+  function renderSummary(){
+    var cart = loadCart();
+    var itemsEl = document.getElementById('summary-items');
+    itemsEl.innerHTML = '';
+    var subtotal = 0;
+
+    Object.keys(cart).forEach(function(id){
+      var item = MENU_LOOKUP[id];
+      if (!item) return;
+      var qty = cart[id];
+      subtotal += item.price * qty;
+      var row = document.createElement('div');
+      row.className = 'sum-item';
+      row.innerHTML = '<span><span class="qty">' + qty + '×</span> ' + item.name + '</span><span>' + fmt(item.price * qty) + '</span>';
+      itemsEl.appendChild(row);
+    });
+
+    var delivery = subtotal >= FREE_DELIVERY_AT ? 0 : DELIVERY_FEE;
+    var taxes = Math.round(subtotal * TAX_RATE);
+    var total = subtotal + delivery + taxes;
+
+    document.getElementById('sum-subtotal').textContent = fmt(subtotal);
+    document.getElementById('sum-delivery').textContent = delivery === 0 ? 'Free' : fmt(delivery);
+    document.getElementById('sum-taxes').textContent = fmt(taxes);
+    document.getElementById('sum-total').textContent = fmt(total);
+
+    return { cart: cart, subtotal: subtotal, delivery: delivery, taxes: taxes, total: total };
+  }
+
+  var currentOrder = renderSummary();
+  loadLiveMenuLookup().then(function(){ currentOrder = renderSummary(); });
+
+  document.querySelectorAll('.addr-option').forEach(function(el){
+    el.addEventListener('click', function(){
+      document.querySelectorAll('.addr-option').forEach(function(o){ o.classList.remove('selected'); });
+      el.classList.add('selected');
+    });
+  });
+  document.querySelectorAll('.pay-option').forEach(function(el, idx){
+    el.addEventListener('click', function(){
+      document.querySelectorAll('.pay-option').forEach(function(o){ o.classList.remove('selected'); });
+      el.classList.add('selected');
+      var isCod = idx === 2; // card=0, upi=1, cod=2 — matches markup order
+      document.getElementById('stripe-element-wrap').style.display = isCod ? 'none' : 'block';
+      if (!isCod) mountStripeElement();
+    });
+  });
+
+  var stripe = window.Stripe ? Stripe(window.AVIKA_STRIPE_PUBLISHABLE_KEY || 'pk_test_replace_me') : null;
+  var elements = null;
+
+  async function mountStripeElement(){
+    if (elements || !stripe) return; // only mount once
+    // A real client_secret requires an order to exist first, so this shows
+    // a generic card field now and the real PaymentIntent is created and
+    // confirmed at "Place order" time once the order total is known.
+    elements = stripe.elements({ mode: 'payment', amount: Math.round(currentOrder.total * 100) || 100, currency: 'inr' });
+    var el = elements.create('payment');
+    el.mount('#payment-element');
+  }
+
+  function showBanner(kind, message){
+    var b = document.getElementById('order-banner');
+    b.className = 'form-banner show ' + kind;
+    b.textContent = message;
+  }
+
+  document.getElementById('place-order-btn').addEventListener('click', async function(){
+    if (typeof Avika !== 'undefined' && !Avika.auth.isLoggedIn()){
+      window.location.href = 'auth.html?redirect=checkout.html';
+      return;
+    }
+    var btn = this;
+    showBanner('', '');
+    document.getElementById('order-banner').className = 'form-banner';
+
+    var phone = document.getElementById('phone').value.trim();
+    if (!phone){
+      showBanner('error', 'Enter a phone number so the kitchen can reach you.');
+      document.getElementById('phone').focus();
+      return;
+    }
+
+    var paymentMethodEl = document.querySelector('input[name="pay"]:checked');
+    var payLabels = ['card', 'upi', 'cod'];
+    var payIndex = Array.from(document.querySelectorAll('input[name="pay"]')).indexOf(paymentMethodEl);
+    var paymentMethod = payLabels[payIndex] || 'cod';
+
+    var orderPayload = {
+      kitchenId: KITCHEN_ID,
+      items: Object.keys(currentOrder.cart).map(function(id){
+        return { menuItemId: id, quantity: currentOrder.cart[id] };
+      }),
+      deliveryAddress: {
+        line1: '14 Race Course Road, RS Puram, Coimbatore, TN 641002',
+        landmark: document.getElementById('landmark').value.trim(),
+        city: 'Coimbatore',
+        phone: phone,
+        instructions: document.getElementById('note').value.trim()
+      },
+      paymentMethod: paymentMethod
+    };
+
+    btn.disabled = true;
+    btn.textContent = 'Placing order…';
+
+    if (typeof Avika === 'undefined'){
+      showBanner('error', 'API client failed to load.');
+      btn.disabled = false; btn.textContent = 'Place order';
+      return;
+    }
+
+    var result = await Avika.orders.create(orderPayload);
+
+    if (!result.ok){
+      btn.disabled = false; btn.textContent = 'Place order';
+      showBanner('error', result.error);
+      return;
+    }
+
+    if (paymentMethod !== 'cod'){
+      btn.textContent = 'Confirming payment…';
+      var intentRes = await Avika.payments.createIntent(result.data._id);
+      if (!intentRes.ok){
+        showBanner('error', 'Order placed, but payment setup failed: ' + intentRes.error);
+        btn.disabled = false; btn.textContent = 'Place order';
+        return;
+      }
+      if (!stripe || !elements){
+        showBanner('error', 'Payment form did not load. Refresh and try again.');
+        btn.disabled = false; btn.textContent = 'Place order';
+        return;
+      }
+      var confirmRes = await stripe.confirmPayment({
+        elements: elements,
+        clientSecret: intentRes.data.clientSecret,
+        confirmParams: { return_url: window.location.href },
+        redirect: 'if_required'
+      });
+      if (confirmRes.error){
+        showBanner('error', confirmRes.error.message);
+        btn.disabled = false; btn.textContent = 'Place order';
+        return;
+      }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Place order';
+
+    if (!result.ok){
+      // Expected in this preview since no backend is running at localhost:4000 —
+      // shows the real error path rather than pretending it worked.
+      showBanner('error', result.error);
+      return;
+    }
+
+    var all = Avika.cart.get();
+    delete all[KITCHEN_ID];
+    Avika.cart.save(all);
+    showBanner('success', 'Order placed! Redirecting to your order status…');
+    setTimeout(function(){ window.location.href = 'index.html'; }, 1200);
+  });
+</script>
+</body>
+</html>
